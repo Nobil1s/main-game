@@ -1,27 +1,31 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-public class FPSController : MonoBehaviour
+public class FPController : MonoBehaviour
 {
     public Camera playerCamera;
-    public float walkSpeed = 6f;
-    public float runSpeed = 12f;
-    public float jumpPower = 7f;
+    public float walkSpeed = 5f;
+    public float runSpeed = 10f;
+    public float jumpPower = 10f;
     public float gravity = 10f;
 
     public float lookSpeed = 2f;
     public float lookXLimit = 45f;
+    public float time_on_air = 0;
 
     Vector3 moveDirection = Vector3.zero;
     float rotationX = 0;
 
     public bool canMove = true;
+    public bool canDJump = true;
 
     CharacterController characterController;
 
-    void Start(){
+    void Start()
+    {
         characterController = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -29,6 +33,7 @@ public class FPSController : MonoBehaviour
 
     void Update()
     {
+
         #region Handles Movment
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
@@ -43,7 +48,14 @@ public class FPSController : MonoBehaviour
         #endregion
 
         #region Handles Jumping
-        if(Input.GetButton("Jump") && canMove && characterController.isGrounded)
+
+        if (characterController.isGrounded)
+        {
+            canDJump = true;
+            time_on_air = 0;
+        }
+
+        if (Input.GetButton("Jump") && canMove && characterController.isGrounded)
         {
             moveDirection.y = jumpPower;
         }
@@ -52,9 +64,15 @@ public class FPSController : MonoBehaviour
             moveDirection.y = movementDirectionY;
         }
 
-        if(!characterController.isGrounded)
+        if (!characterController.isGrounded)
         {
             moveDirection.y -= gravity * Time.deltaTime;
+            time_on_air += Time.deltaTime;
+            if(Input.GetButton("Jump") && time_on_air >= 0.5 && canDJump)
+            {
+                moveDirection += new Vector3(100f*moveDirection.x, 0, 100f*moveDirection.z);
+                canDJump = false;
+            }
         }
 
         #endregion
